@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn, signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 
 export default function Auth() {
   const { data: session } = useSession();
@@ -10,7 +11,25 @@ export default function Auth() {
       {session ? (
         <>
           <p className="text-lg font-semibold">Welcome, {session.user?.name}</p>
-          <img src={session.user?.image!} alt="User Avatar" className="w-12 h-12 rounded-full" />
+          
+          {session.user?.image ? (
+            <Image
+              src={session.user.image}
+              alt="User Avatar"
+              width={48}
+              height={48}
+              className="rounded-full"
+            />
+          ) : (
+            <Image
+              src="/default-avatar.png"
+              alt="Default Avatar"
+              width={48}
+              height={48}
+              className="rounded-full"
+            />
+          )}
+
           <button
             onClick={() => signOut()}
             className="bg-red-500 text-white px-4 py-2 rounded"

@@ -21,6 +21,6 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ message: "Profile updated", user });
   } catch (err) {
-    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+    return NextResponse.json({ error: `Update failed :${err}`}, { status: 500 });
   }
 }

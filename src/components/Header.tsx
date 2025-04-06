@@ -2,22 +2,18 @@
 
 import React from "react";
 import { useTheme } from "../context/ThemeProvider";
-
-const themes = {
-  light: "bg-white text-black",
-  dark: "bg-gray-900 text-white",
-  neon: "bg-purple-700 text-white",
-  minimalist: "bg-gray-400 text-black",
-};
+import { themes } from "../context/ThemeProvider"; // 👈 Reuse the exported theme map
 
 const Header = () => {
   const { theme, setTheme } = useTheme();
 
-  const themeKeys = Object.keys(themes);
+  // 👇 Explicitly cast to ThemeName[] for type safety
+  const themeKeys = Object.keys(themes) as (keyof typeof themes)[];
+
   const toggleTheme = () => {
     const currentIndex = themeKeys.indexOf(theme);
     const nextTheme = themeKeys[(currentIndex + 1) % themeKeys.length];
-    setTheme(nextTheme);
+    setTheme(nextTheme); // ✅ No more type error
   };
 
   return (
@@ -38,7 +34,7 @@ const Header = () => {
           {/* Theme Selection Dropdown */}
           <select
             value={theme}
-            onChange={(e) => setTheme(e.target.value)}
+            onChange={(e) => setTheme(e.target.value as keyof typeof themes)} // 👈 cast to ThemeName
             className="p-2 rounded-lg border bg-gray-300 text-black dark:bg-gray-700 dark:text-white cursor-pointer"
           >
             {themeKeys.map((t) => (
@@ -54,3 +50,4 @@ const Header = () => {
 };
 
 export default Header;
+

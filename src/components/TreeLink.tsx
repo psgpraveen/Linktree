@@ -1,43 +1,43 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { useTheme } from "@/context/ThemeProvider";
-import { Trash2, Link2, UserPlus, Loader2, CheckCircle2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import axios, { AxiosError } from "axios";
+import { Trash2, Link2, UserPlus, Loader2 } from "lucide-react";
 import QRCode from "react-qr-code";
 import Image from "next/image";
 
+type LinkType = {
+  title: string;
+  link: string;
+};
+
+type MessageType = {
+  type: "success" | "error";
+  text: string;
+};
+
 const TreeLink = () => {
   const { data: session } = useSession();
-  const { theme } = useTheme();
   const email = session?.user?.email || "guest@example.com";
 
-  const [userId, setUserId] = useState("");
-  const [title, setTitle] = useState("");
-  const [link, setLink] = useState("");
-  const [links, setLinks] = useState<any[]>([]);
-  const [profilePic, setProfilePic] = useState("");
-  const [showQR, setShowQR] = useState(false);
-  const [loading, setLoading] = useState(false); // 💡 Added
-  const [picUploading, setPicUploading] = useState(false); // 💡 Added
-  const [userIdUpdating, setUserIdUpdating] = useState(false); // 💡 Added
-  const [userIdMessage, setUserIdMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
-  const [picupdmsg, setPicupdmsg] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+  const [userId, setUserId] = useState<string>("");
+  const [title, setTitle] = useState<string>("");
+  const [link, setLink] = useState<string>("");
+  const [links, setLinks] = useState<LinkType[]>([]);
+  const [profilePic, setProfilePic] = useState<string>("");
+  const [showQR, setShowQR] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [picUploading, setPicUploading] = useState<boolean>(false);
+  const [userIdUpdating, setUserIdUpdating] = useState<boolean>(false);
+  const [userIdMessage, setUserIdMessage] = useState<MessageType | null>(null);
+  const [picupdmsg, setPicupdmsg] = useState<MessageType | null>(null);
 
   const publicLink = `http://localhost:3000/user/${userId}`;
 
-  const fetchLinksByEmail = async () => {
+  const fetchLinksByEmail = useCallback(async () => {
     try {
-      const response = await axios.get(
-        `/api/treelink?email=${encodeURIComponent(email)}`
-      );
+      const response = await axios.get(`/api/treelink?email=${encodeURIComponent(email)}`);
       const { links, userId, profilePic } = response.data;
 
       if (userId) setUserId(userId);
@@ -46,15 +46,13 @@ const TreeLink = () => {
     } catch (error) {
       console.error("Error fetching links:", error);
     }
-  };
+  }, [email]);
 
   useEffect(() => {
     if (session?.user?.email) fetchLinksByEmail();
-  }, [session]);
+  }, [session, fetchLinksByEmail]);
 
-  const handleProfileUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleProfileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !email) return;
 
@@ -62,29 +60,19 @@ const TreeLink = () => {
     reader.onload = async () => {
       const base64Image = reader.result as string;
       setProfilePic(base64Image);
-      setPicUploading(true); // 💡 Start loader
+      setPicUploading(true);
 
       try {
-        await axios.put("/api/treelink/photo", {
-          email,
-          profilePic: base64Image,
-        });
-
-        setPicupdmsg({
-          type: "success",
-          text: "✅ Profile updated!",
-        });
-      } catch (error: any) {
+        await axios.put("/api/treelink/photo", { email, profilePic: base64Image });
+        setPicupdmsg({ type: "success", text: "✅ Profile updated!" });
+      } catch (error) {
+        const err = error as AxiosError<{ error: string }>;
         setPicupdmsg({
           type: "error",
-          text: `❌ Failed: ${
-            axios.isAxiosError(error)
-              ? error.response?.data?.error || "Unknown"
-              : "Unexpected error"
-          }`,
+          text: `❌ Failed: ${err.response?.data?.error || "Unexpected error"}`,
         });
       } finally {
-        setPicUploading(false); // 💡 Stop loader
+        setPicUploading(false);
         setTimeout(() => setPicupdmsg(null), 3000);
       }
     };
@@ -95,29 +83,26 @@ const TreeLink = () => {
     if (!title || !link) return alert("Title and Link are required!");
     if (!userId || !email) return alert("User ID and Email are required!");
 
-    setLoading(true); // 💡 Start loader
+    setLoading(true);
     try {
       await axios.post("/api/treelink", { userId, email, title, link });
-
       setLinks((prev) => [...prev, { title, link }]);
       setTitle("");
       setLink("");
-    } catch (error) {
+    } catch {
       alert("❌ Failed to add link.");
     } finally {
-      setLoading(false); // 💡 Stop loader
+      setLoading(false);
     }
   };
 
   const deleteLink = async (linkToDelete: string) => {
     try {
       await axios.delete(
-        `/api/treelink?email=${encodeURIComponent(
-          email
-        )}&link=${encodeURIComponent(linkToDelete)}`
+        `/api/treelink?email=${encodeURIComponent(email)}&link=${encodeURIComponent(linkToDelete)}`
       );
       setLinks((prev) => prev.filter((l) => l.link !== linkToDelete));
-    } catch (error) {
+    } catch {
       alert("❌ Could not delete.");
     }
   };
@@ -128,50 +113,41 @@ const TreeLink = () => {
       return;
     }
 
-    setUserIdUpdating(true); // 💡 Start loader
+    setUserIdUpdating(true);
     try {
       await axios.put("/api/treelink", { userId, email });
       setUserIdMessage({ type: "success", text: "✅ User ID updated!" });
-    } catch (error: any) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 409) {
-          setUserIdMessage({
-            type: "error",
-            text: "❌ ID already taken!",
-          });
-        } else {
-          setUserIdMessage({
-            type: "error",
-            text: `❌ Error: ${error.response?.data?.error || "Unknown"}`,
-          });
-        }
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
+      if (err.response?.status === 409) {
+        setUserIdMessage({ type: "error", text: "❌ ID already taken!" });
       } else {
-        setUserIdMessage({ type: "error", text: "❌ Unexpected error." });
+        setUserIdMessage({
+          type: "error",
+          text: `❌ Error: ${err.response?.data?.error || "Unexpected error"}`,
+        });
       }
     } finally {
-      setUserIdUpdating(false); // 💡 Stop loader
+      setUserIdUpdating(false);
       setTimeout(() => setUserIdMessage(null), 3000);
     }
   };
 
   return (
-    <div
-      className={`p-6 max-w-2xl mx-auto rounded-2xl shadow-xl transition-all duration-500`}
-    >
+    <div className="p-6 max-w-2xl mx-auto rounded-2xl shadow-xl">
       {/* Profile Upload */}
       <div className="flex flex-col items-center relative">
         <label htmlFor="profile-upload" className="cursor-pointer relative group">
-          <img
-            src={profilePic || "/default-avatar.png"}
-            alt="Profile"
-            className="w-24 h-24 rounded-full object-cover border-4 border-blue-400 shadow-md"
-          />
-          <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-sm font-semibold transition">
-            {picUploading ? (
-              <Loader2 className="animate-spin" size={18} />
-            ) : (
-              "Upload"
-            )}
+          <div className="relative w-24 h-24">
+            <Image
+              src={profilePic || "/default-avatar.png"}
+              alt="Profile"
+              fill
+              className="rounded-full object-cover border-4 border-blue-400 shadow-md"
+            />
+            <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-sm font-semibold transition">
+              {picUploading ? <Loader2 className="animate-spin" size={18} /> : "Upload"}
+            </div>
           </div>
         </label>
         <input
@@ -184,11 +160,7 @@ const TreeLink = () => {
         <h2 className="text-3xl font-bold mt-4">🌿 Your TreeLink</h2>
         <p className="text-sm text-gray-500">{email}</p>
         {picupdmsg && (
-          <p
-            className={`mt-2 text-sm ${
-              picupdmsg.type === "success" ? "text-green-600" : "text-red-600"
-            }`}
-          >
+          <p className={`mt-2 text-sm ${picupdmsg.type === "success" ? "text-green-600" : "text-red-600"}`}>
             {picupdmsg.text}
           </p>
         )}
@@ -212,19 +184,11 @@ const TreeLink = () => {
             onClick={updateUserId}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
           >
-            {userIdUpdating ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : (
-              "Update"
-            )}
+            {userIdUpdating ? <Loader2 size={18} className="animate-spin" /> : "Update"}
           </button>
         </div>
         {userIdMessage && (
-          <p
-            className={`mt-2 text-sm ${
-              userIdMessage.type === "success" ? "text-green-600" : "text-red-600"
-            }`}
-          >
+          <p className={`mt-2 text-sm ${userIdMessage.type === "success" ? "text-green-600" : "text-red-600"}`}>
             {userIdMessage.text}
           </p>
         )}
@@ -256,7 +220,7 @@ const TreeLink = () => {
 
       <button
         onClick={addLink}
-        className="mt-4 w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+        className="mt-4 w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
       >
         {loading ? (
           <>
@@ -274,7 +238,7 @@ const TreeLink = () => {
       <div className="mt-6 flex flex-col items-center">
         <button
           onClick={() => setShowQR(!showQR)}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
         >
           {showQR ? "Hide QR & Link" : "Show QR & Public Link"}
         </button>
@@ -299,7 +263,7 @@ const TreeLink = () => {
             {links.map((l, index) => (
               <li
                 key={index}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <a
                   href={l.link}
@@ -311,7 +275,7 @@ const TreeLink = () => {
                 </a>
                 <button
                   onClick={() => deleteLink(l.link)}
-                  className="text-red-500 hover:text-red-700 transition"
+                  className="text-red-500 hover:text-red-700"
                 >
                   <Trash2 size={18} />
                 </button>

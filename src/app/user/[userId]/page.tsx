@@ -13,7 +13,8 @@ interface LinkItem {
 
 const UserPage = () => {
   const params = useParams();
-  const userId = decodeURIComponent(params?.userId || "");
+  const rawUserId = params?.userId;
+  const userId = decodeURIComponent(Array.isArray(rawUserId) ? rawUserId[0] : rawUserId || "");
 
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [profilePic, setProfilePic] = useState<string | null>(null);
@@ -27,7 +28,6 @@ const UserPage = () => {
 
         if (response.ok && data.links?.length > 0) {
           setLinks(data.links);
-          // Use first profilePic found
           setProfilePic(data.profilePic || null);
         } else {
           console.error("Error fetching links:", data.error);
@@ -56,22 +56,15 @@ const UserPage = () => {
     <div className="flex flex-col items-center min-h-screen bg-gradient-to-b from-white to-gray-200 dark:from-gray-900 dark:to-black py-10 px-4">
       {/* Profile Section */}
       <div className="flex flex-col items-center mb-6">
-      {profilePic ? (
-  <img
-    src={profilePic}
-    alt="Profile"
-    className="w-24 h-24 rounded-full border-4 border-blue-400 object-cover"
-  />
-) : (
-  <img
-    src="/default-avatar.png"
-    alt="Default Avatar"
-    className="w-24 h-24 rounded-full border-4 border-blue-400 object-cover"
-  />
-)}
-
+        <Image
+          src={profilePic || "/default-avatar.png"}
+          alt="Profile"
+          width={96}
+          height={96}
+          className="rounded-full border-4 border-blue-400 object-cover"
+        />
         <h2 className="text-2xl md:text-3xl font-bold mt-4 text-gray-800 dark:text-white text-center">
-          🌿 {userId.split("@")[0]}'s Links
+          🌿 {userId.split("@")[0]}&rsquo;s Links
         </h2>
       </div>
 
@@ -98,7 +91,14 @@ const UserPage = () => {
 
       {/* Footer */}
       <p className="mt-10 text-sm text-gray-500 dark:text-gray-400">
-        🚀 Powered by <a href="https://psgpraveen.vercel.app" className="text-blue-600 font-semibold" target="_blank">psgpraveen</a>
+        🚀 Powered by{" "}
+        <a
+          href="https://psgpraveen.vercel.app"
+          className="text-blue-600 font-semibold"
+          target="_blank"
+        >
+          psgpraveen
+        </a>
       </p>
     </div>
   );

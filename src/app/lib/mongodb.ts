@@ -6,9 +6,19 @@ if (!MONGODB_URI) {
   throw new Error("❌ Please define the MONGODB_URI environment variable inside .env.local");
 }
 
-let cached = (global as any).mongoose || { conn: null, promise: null };
+interface MongooseGlobal {
+  mongoose?: {
+    conn: typeof mongoose | null;
+    promise: Promise<typeof mongoose> | null;
+  };
+}
 
-export async function connectToDB() {
+// Use `globalThis` in TypeScript to avoid type errors
+const globalWithMongoose = globalThis as MongooseGlobal;
+
+const cached = globalWithMongoose.mongoose ??= { conn: null, promise: null };
+
+export async function connectToDB(): Promise<typeof mongoose> {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
@@ -18,7 +28,7 @@ export async function connectToDB() {
   }
 
   cached.conn = await cached.promise;
-  console.log("Database is Connected");
-  
+  console.log("✅ Database is Connected");
+
   return cached.conn;
 }
