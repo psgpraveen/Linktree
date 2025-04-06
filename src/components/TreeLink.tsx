@@ -33,7 +33,7 @@ const TreeLink = () => {
   const [userIdMessage, setUserIdMessage] = useState<MessageType | null>(null);
   const [picupdmsg, setPicupdmsg] = useState<MessageType | null>(null);
 
-  const publicLink = `http://localhost:3000/user/${userId}`;
+  const publicLink = `https://linktree-psgpraveen.vercel.app/user/${userId}`;
 
   const fetchLinksByEmail = useCallback(async () => {
     try {
