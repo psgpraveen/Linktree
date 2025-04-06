@@ -6,6 +6,7 @@ import axios, { AxiosError } from "axios";
 import { Trash2, Link2, UserPlus, Loader2 } from "lucide-react";
 import QRCode from "react-qr-code";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 type LinkType = {
   title: string;
@@ -28,16 +29,19 @@ const TreeLink = () => {
   const [profilePic, setProfilePic] = useState<string>("");
   const [showQR, setShowQR] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [load, setLoad] = useState<boolean>(false);
   const [picUploading, setPicUploading] = useState<boolean>(false);
   const [userIdUpdating, setUserIdUpdating] = useState<boolean>(false);
   const [userIdMessage, setUserIdMessage] = useState<MessageType | null>(null);
   const [picupdmsg, setPicupdmsg] = useState<MessageType | null>(null);
 
-  const publicLink = `https://linktree-psgpraveen.vercel.app/user/${userId}`;
+  const publicLink = `${window.location.origin}/user/${userId}`;
 
   const fetchLinksByEmail = useCallback(async () => {
     try {
-      const response = await axios.get(`/api/treelink?email=${encodeURIComponent(email)}`);
+      const response = await axios.get(
+        `/api/treelink?email=${encodeURIComponent(email)}`
+      );
       const { links, userId, profilePic } = response.data;
 
       if (userId) setUserId(userId);
@@ -49,10 +53,20 @@ const TreeLink = () => {
   }, [email]);
 
   useEffect(() => {
-    if (session?.user?.email) fetchLinksByEmail();
+    const init = async () => {
+      if (session?.user?.email) {
+        setLoad(true);
+        await fetchLinksByEmail();
+        setLoad(false);
+      }
+    };
+  
+    init();
   }, [session, fetchLinksByEmail]);
 
-  const handleProfileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file || !email) return;
 
@@ -63,7 +77,10 @@ const TreeLink = () => {
       setPicUploading(true);
 
       try {
-        await axios.put("/api/treelink/photo", { email, profilePic: base64Image });
+        await axios.put("/api/treelink/photo", {
+          email,
+          profilePic: base64Image,
+        });
         setPicupdmsg({ type: "success", text: "✅ Profile updated!" });
       } catch (error) {
         const err = error as AxiosError<{ error: string }>;
@@ -99,7 +116,9 @@ const TreeLink = () => {
   const deleteLink = async (linkToDelete: string) => {
     try {
       await axios.delete(
-        `/api/treelink?email=${encodeURIComponent(email)}&link=${encodeURIComponent(linkToDelete)}`
+        `/api/treelink?email=${encodeURIComponent(
+          email
+        )}&link=${encodeURIComponent(linkToDelete)}`
       );
       setLinks((prev) => prev.filter((l) => l.link !== linkToDelete));
     } catch {
@@ -109,7 +128,10 @@ const TreeLink = () => {
 
   const updateUserId = async () => {
     if (!userId || !email) {
-      setUserIdMessage({ type: "error", text: "User ID and Email are required!" });
+      setUserIdMessage({
+        type: "error",
+        text: "User ID and Email are required!",
+      });
       return;
     }
 
@@ -133,20 +155,46 @@ const TreeLink = () => {
     }
   };
 
-  return (
+  return (<>
+      {
+        load ? <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col items-center h-screen"
+      >
+        <motion.div
+          className="flex items-center gap-2 p-6 rounded-xl shadow-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+        >
+          <Loader2 className="animate-spin text-blue-600 dark:text-blue-400" size={36} />
+          <p className="text-xl font-medium text-gray-700 dark:text-gray-200">
+            Loading your TreeLink...
+          </p>
+        </motion.div>
+      </motion.div>: 
     <div className="p-6 max-w-2xl mx-auto rounded-2xl shadow-xl">
       {/* Profile Upload */}
       <div className="flex flex-col items-center relative">
-        <label htmlFor="profile-upload" className="cursor-pointer relative group">
+        <label
+          htmlFor="profile-upload"
+          className="cursor-pointer relative group"
+          >
           <div className="relative w-24 h-24">
             <Image
               src={profilePic || "/default-avatar.png"}
               alt="Profile"
               fill
               className="rounded-full object-cover border-4 border-blue-400 shadow-md"
-            />
+              />
             <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-sm font-semibold transition">
-              {picUploading ? <Loader2 className="animate-spin" size={18} /> : "Upload"}
+              {picUploading ? (
+                <Loader2 className="animate-spin" size={18} />
+              ) : (
+                "Upload"
+              )}
             </div>
           </div>
         </label>
@@ -156,11 +204,15 @@ const TreeLink = () => {
           accept="image/*"
           onChange={handleProfileUpload}
           className="hidden"
-        />
+          />
         <h2 className="text-3xl font-bold mt-4">🌿 Your TreeLink</h2>
         <p className="text-sm text-gray-500">{email}</p>
         {picupdmsg && (
-          <p className={`mt-2 text-sm ${picupdmsg.type === "success" ? "text-green-600" : "text-red-600"}`}>
+          <p
+          className={`mt-2 text-sm ${
+            picupdmsg.type === "success" ? "text-green-600" : "text-red-600"
+          }`}
+          >
             {picupdmsg.text}
           </p>
         )}
@@ -179,16 +231,26 @@ const TreeLink = () => {
               setUserIdMessage(null);
             }}
             className="border p-2 rounded w-full"
-          />
+            />
           <button
             onClick={updateUserId}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
           >
-            {userIdUpdating ? <Loader2 size={18} className="animate-spin" /> : "Update"}
+            {userIdUpdating ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              "Update"
+            )}
           </button>
         </div>
         {userIdMessage && (
-          <p className={`mt-2 text-sm ${userIdMessage.type === "success" ? "text-green-600" : "text-red-600"}`}>
+          <p
+            className={`mt-2 text-sm ${
+              userIdMessage.type === "success"
+              ? "text-green-600"
+                : "text-red-600"
+              }`}
+              >
             {userIdMessage.text}
           </p>
         )}
@@ -204,7 +266,7 @@ const TreeLink = () => {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="border p-2 rounded w-full"
-          />
+            />
         </div>
         <div className="flex-1">
           <label className="block text-sm font-semibold mb-1">Link</label>
@@ -214,14 +276,14 @@ const TreeLink = () => {
             value={link}
             onChange={(e) => setLink(e.target.value)}
             className="border p-2 rounded w-full"
-          />
+            />
         </div>
       </div>
 
       <button
         onClick={addLink}
         className="mt-4 w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-      >
+        >
         {loading ? (
           <>
             <Loader2 size={18} className="animate-spin" />
@@ -239,15 +301,23 @@ const TreeLink = () => {
         <button
           onClick={() => setShowQR(!showQR)}
           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-        >
+          >
           {showQR ? "Hide QR & Link" : "Show QR & Public Link"}
         </button>
         {showQR && userId && (
           <div className="mt-4 flex flex-col items-center gap-3">
-            <QRCode value={publicLink} size={128} className="bg-white p-2 rounded shadow-md" />
+            <QRCode
+              value={publicLink}
+              size={128}
+              className="bg-white p-2 rounded shadow-md"
+              />
             <p className="text-xs text-center text-gray-500 break-words max-w-xs">
               Profile Link: <br />
-              <a href={publicLink} target="_blank" className="text-blue-600 hover:underline">
+              <a
+                href={publicLink}
+                target="_blank"
+                className="text-blue-600 hover:underline"
+                >
                 {publicLink}
               </a>
             </p>
@@ -270,13 +340,13 @@ const TreeLink = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-blue-600 hover:underline"
-                >
+                  >
                   <Link2 size={18} /> {l.title}
                 </a>
                 <button
                   onClick={() => deleteLink(l.link)}
                   className="text-red-500 hover:text-red-700"
-                >
+                  >
                   <Trash2 size={18} />
                 </button>
               </li>
@@ -287,6 +357,7 @@ const TreeLink = () => {
         )}
       </div>
     </div>
+       }  </>
   );
 };
 

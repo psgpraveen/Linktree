@@ -7,7 +7,7 @@ export default function Auth() {
   const { data: session } = useSession();
 
   return (
-    <div className="flex flex-col items-center gap-4 mt-6">
+    <div className="flex flex-col items-center gap-4 mt-12">
       {session ? (
         <>
           <p className="text-lg font-semibold">Welcome, {session.user?.name}</p>
@@ -32,7 +32,7 @@ export default function Auth() {
 
           <button
             onClick={() => signOut()}
-            className="bg-red-500 text-white px-4 py-2 rounded"
+            className="bg-red-500 text-white cursor-pointer px-4 py-2 rounded"
           >
             Sign Out
           </button>
@@ -40,7 +40,7 @@ export default function Auth() {
       ) : (
         <button
           onClick={() => signIn("google")}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-blue-500 text-white cursor-pointer px-4 py-2 rounded"
         >
           Sign in with Google
         </button>

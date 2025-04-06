@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 interface LinkItem {
   title: string;
@@ -53,47 +54,67 @@ const UserPage = () => {
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gradient-to-b from-white to-gray-200 dark:from-gray-900 dark:to-black py-10 px-4">
-      {/* Profile Section */}
-      <div className="flex flex-col items-center mb-6">
-        <Image
-          src={profilePic || "/default-avatar.png"}
-          alt="Profile"
-          width={96}
-          height={96}
-          className="rounded-full border-4 border-blue-400 object-cover"
-        />
-        <h2 className="text-2xl md:text-3xl font-bold mt-4 text-gray-800 dark:text-white text-center">
-          🌿 {userId.split("@")[0]}&rsquo;s Links
-        </h2>
-      </div>
+    <div className="flex flex-col items-center min-h-screen bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-black py-10 px-4">
+      {loading ? (
+        <motion.div
+          className="flex flex-col items-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">Loading profile...</p>
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        </motion.div>
+      ) : (
+        <>
+          {/* Profile Section */}
+          <motion.div
+            className="flex flex-col items-center mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Image
+              src={profilePic || "/default-avatar.png"}
+              alt="Profile"
+              width={96}
+              height={96}
+              className="rounded-full border-4 border-blue-400 object-cover"
+            />
+            <h2 className="text-2xl md:text-3xl font-bold mt-4 text-gray-800 dark:text-white text-center">
+              🌿 {userId.split("@")[0]}&rsquo;s Links
+            </h2>
+          </motion.div>
 
-      {/* Links */}
-      <div className="w-full max-w-md">
-        {loading ? (
-          <p className="text-center text-gray-500 dark:text-gray-300">Loading...</p>
-        ) : links.length > 0 ? (
-          links.map((l, index) => (
-            <a
-              key={index}
-              href={l.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-center p-4 mt-4 font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-md transition-all hover:scale-105"
-            >
-              {l.title}
-            </a>
-          ))
-        ) : (
-          <p className="text-center text-gray-500 dark:text-gray-400">No links found.</p>
-        )}
-      </div>
+          {/* Links */}
+          <div className="w-full max-w-md">
+            {links.length > 0 ? (
+              links.map((l, index) => (
+                <motion.a
+                  key={index}
+                  href={l.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full text-center p-4 mt-4 font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg hover:shadow-xl transition-transform hover:scale-105"
+                  whileHover={{ scale: 1.05 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  {l.title}
+                </motion.a>
+              ))
+            ) : (
+              <p className="text-center text-gray-500 dark:text-gray-400">No links found.</p>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Footer */}
-      <p className="mt-10 text-sm text-gray-500 dark:text-gray-400">
+      <p className="mt-10 text-sm text-gray-500 dark:text-gray-400 text-center">
         🚀 Powered by{" "}
         <a
-          href="https://psgpraveen.vercel.app"
+          href="https://psgpraveen.github.io/port/"
           className="text-blue-600 font-semibold"
           target="_blank"
         >
