@@ -54,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        <meta name="google-adsense-account" content="ca-pub-8510113161583635">
         <link rel="icon" href="/favicon.ico" />
         <link rel="canonical" href="https://psgpraveen.vercel.app" />
         <meta name="theme-color" content="#6366f1" />
