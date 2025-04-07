@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: "Create and share your personalized link hub with Treelink, built by psgpraveen using Next.js, Tailwind CSS, and modern web technologies.",
   icons: {
     icon: "/img.png",
-  },    <meta name="google-adsense-account" content="ca-pub-8510113161583635">
+  },    
   keywords: [
     "Treelink",
     "psgpraveen",
@@ -57,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/favicon.ico" />
         <link rel="canonical" href="https://psgpraveen.vercel.app" />
         <meta name="theme-color" content="#6366f1" />
+        <meta name="google-adsense-account" content="ca-pub-8510113161583635"/>
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
