@@ -40,8 +40,10 @@ const UserPage = () => {
         } else {
           setError("User does not exist or no links found.");
         }
-      } catch (error) {
+      } catch (err) {
         setError("Network error. Please try again later.");
+        console.log(err);
+        
       } finally {
         setLoading(false);
       }
@@ -134,9 +136,10 @@ const UserPage = () => {
                 height={120}
                 className="rounded-full border-4 border-blue-400 object-cover shadow-lg hover:scale-105 transition-all"
               />
-              <h2 className="text-2xl sm:text-3xl font-semibold mt-4 text-gray-800 text-center">
-                🌿 {userId.split("@")[0]}'s Links
-              </h2>
+             <h2 className="text-2xl sm:text-3xl font-semibold mt-4 text-gray-800 text-center">
+  🌿 {userId.split("@")[0]}&apos;s Links
+</h2>
+
               <p className="text-sm text-gray-500 mt-1">{userId}</p>
 
               <div className="mt-4 text-center text-gray-600">
